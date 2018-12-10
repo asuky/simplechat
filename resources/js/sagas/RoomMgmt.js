@@ -15,25 +15,7 @@ export function* initConnection(action) {
     // RTCPeerConnection を作成、
     // Channel 名は roomid とする
     let peerConnection = new RTCPeerConnection(rtcConf);
-    const dataChannel = peerConnection.createDataChannel(action.payload.roomid);
-
-    // 諸々テスト用
-    dataChannel.onerror = function (error) {
-        console.log("Data Channel Error:", error);
-    };
-    
-    dataChannel.onmessage = function (event) {
-        console.log("Got Data Channel Message:", event.data);
-    };
-    
-    dataChannel.onopen = function () {
-        dataChannel.send("Hello World!");
-    };
-    
-    dataChannel.onclose = function () {
-        console.log("The Data Channel is Closed");
-    };
-    
+    let dataChannel;
     peerConnection.payload = action.payload;
     
     //console.log(roomStatus);
@@ -43,11 +25,32 @@ export function* initConnection(action) {
                             action.payload.csrf);
     
     // status が 0 のとき
-    // offer 側となるので、roomを作りOffer を揃えてPOST
+    // offer 側となるので、datachannel を作り Offer を揃えてPOST
     // status が 4 になるまで待機
     if (response.data.status === 0) {
+        dataChannel = peerConnection.createDataChannel(action.payload.roomid);
+        console.log("DataChannel created");
+        console.log(dataChannel);
+        // 諸々テスト用
+        dataChannel.onerror = function (error) {
+            console.log("Data Channel Error:", error);
+        };
+        
+        dataChannel.onmessage = function (event) {
+            console.log("Got Data Channel Message:", event.data);
+        };
+        
+        dataChannel.onopen = function () {
+            dataChannel.send("Hello World!");
+        };
+        
+        dataChannel.onclose = function () {
+            console.log("The Data Channel is Closed");
+        };
+        
         yield call(createRoom, action.payload);
         yield call(prepareOffer, peerConnection);
+
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
                 console.log("New ICE candidate arrived");
@@ -58,14 +61,36 @@ export function* initConnection(action) {
             }
         }
         // Answer SDP が到着するのを待つ
-        yield put(waitingAnswer(peerConnection));
+        yield put(waitingAnswer(peerConnection, dataChannel));
     // status が 2 のとき
     // Answer 側となるので、Offer を remoteDescription に設定し、
-    //  answer SDP を作って PUT する
+    // answer SDP を作って PUT しつつ datachannel を作る
     } else if (response.data.status === 2) {
         
         yield call(updateRoom, action.payload);
         yield call(prepareAnswer, peerConnection, response.data.sdp);
+
+        peerConnection.ondatachannel = (event) => {
+            console.log("DataChannel arrived");
+            console.log(event);
+            dataChannel = event.channel;
+            // 諸々テスト用
+            dataChannel.onerror = function (error) {
+                console.log("Data Channel Error:", error);
+            };
+            
+            dataChannel.onmessage = function (event) {
+                console.log("Got Data Channel Message:", event.data);
+            };
+            
+            dataChannel.onopen = function () {
+                dataChannel.send("Hello World!");
+            };
+            
+            dataChannel.onclose = function () {
+                console.log("The Data Channel is Closed");
+            };
+        }
 
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
@@ -91,13 +116,16 @@ export function* checkAnswer(action) {
         state.ChatUI.nickname,
         state.ChatUI.csrf);
 
+    console.log("DataChannel State");
+    console.log(state.App.dc.readyState);
     // Answer 側が出揃うまで待機
     if (response.data.status !== 4) {
         console.log("Answer SDP is preparing: " + response.data.status);
-        yield put(waitingAnswer(state.App.pc));
+        yield put(waitingAnswer(state.App.pc, state.App.dc));
     } else {
         console.log("Answer SDP is available");
-        yield call(receiveAnswer, state.App.pc, response.data.sdp);
+        yield call(receiveAnswer, state.App.pc, state.App.dc, response.data.sdp);
+        
     }
 }
 
@@ -195,7 +223,7 @@ async function prepareAnswer(peerConnection, sdp) {
     })
 }
 
-async function receiveAnswer(peerConnection, sdp) {
+async function receiveAnswer(peerConnection, dataChannel, sdp) {
     console.log("receiveAnswer called");
     console.log(sdp);
 
@@ -206,5 +234,7 @@ async function receiveAnswer(peerConnection, sdp) {
         })
     ).then(()=>{
         console.log("RemoteDescription set");
+        console.log(peerConnection);
+        console.log(dataChannel);
     });
 }

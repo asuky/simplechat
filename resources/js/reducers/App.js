@@ -1,6 +1,5 @@
 import { INIT_ROOM_STATE,
-         WAITING_ANSWER,
-         PINGING } from '../actions/actions';
+         WAITING_ANSWER } from '../actions/actions';
 
 const initialState = {
     readonly: false,
@@ -20,13 +19,9 @@ export function App (state = initialState, action) {
 
         case WAITING_ANSWER:
             return Object.assign({}, state, {
-                pc: action.payload.pc
+                pc: action.payload.pc,
+                dc: action.payload.dc
             });
-
-        case PINGING:
-        return Object.assign({}, state, {
-            ping: true
-        });
         default:
             return state;
     }

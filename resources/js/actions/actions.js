@@ -38,11 +38,12 @@ export function sendResponse() {
     }
 }
 
-export function waitingAnswer(peerConnection) {
+export function waitingAnswer(peerConnection, dataChannel) {
     return {
         type: WAITING_ANSWER,
         payload: {
-            "pc": peerConnection
+            "pc": peerConnection,
+            "dc": dataChannel
         }
     }
 }
