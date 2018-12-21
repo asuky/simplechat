@@ -32,8 +32,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         updateField: (property, value) => { dispatch(updateField(property, value)); },
-        initRoomState: (roomid, nickname, csrf) => { dispatch(initRoomState(roomid, nickname, csrf)); },
-        pinging: () => { dispatch(pinging()); }
+        initRoomState: (roomid, nickname, csrf) => { dispatch(initRoomState(roomid, nickname, csrf)); }
     };
 };
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { put, call, select } from 'redux-saga/effects';
-
-import { waitingAnswer } from '../actions/actions';
+import { eventChannel } from 'redux-saga';
+import { waitingAnswer, openChatForm } from '../actions/actions';
 
 const rtcConf = {
     iceServers: [
@@ -41,7 +41,8 @@ export function* initConnection(action) {
         };
         
         dataChannel.onopen = function () {
-            dataChannel.send("Hello World!");
+            console.log("Channel opened!");
+            startChat(peerConnection, dataChannel);
         };
         
         dataChannel.onclose = function () {
@@ -52,6 +53,15 @@ export function* initConnection(action) {
         yield call(prepareOffer, peerConnection);
 
         peerConnection.onicecandidate = (event) => {
+            return eventChannel((emitter) => {
+                console.log("Event Channel!");
+                console.log(event);
+                emitter("hoge");
+                return () => {
+                    console.log("terminated");
+                }
+            });
+            /*
             if (event.candidate) {
                 console.log("New ICE candidate arrived");
                 console.log(event.candidate);
@@ -59,6 +69,7 @@ export function* initConnection(action) {
                 console.log("All ICE candidates are obtained");
                 updateRoomState(peerConnection.payload, peerConnection);
             }
+            */
         }
         // Answer SDP が到着するのを待つ
         yield put(waitingAnswer(peerConnection, dataChannel));
@@ -70,11 +81,13 @@ export function* initConnection(action) {
         yield call(updateRoom, action.payload);
         yield call(prepareAnswer, peerConnection, response.data.sdp);
 
+        // Answer 側は Offer 側から DataChannel が到着するので
+        // 到着時の対応を記載する
         peerConnection.ondatachannel = (event) => {
             console.log("DataChannel arrived");
             console.log(event);
             dataChannel = event.channel;
-            // 諸々テスト用
+            
             dataChannel.onerror = function (error) {
                 console.log("Data Channel Error:", error);
             };
@@ -84,12 +97,15 @@ export function* initConnection(action) {
             };
             
             dataChannel.onopen = function () {
-                dataChannel.send("Hello World!");
+                console.log("Channel opened!");
+                startChat(peerConnection, dataChannel);
             };
             
             dataChannel.onclose = function () {
                 console.log("The Data Channel is Closed");
             };
+
+            
         }
 
         peerConnection.onicecandidate = (event) => {
@@ -237,4 +253,8 @@ async function receiveAnswer(peerConnection, dataChannel, sdp) {
         console.log(peerConnection);
         console.log(dataChannel);
     });
+}
+
+function* startChat(peerConnection, dataChannel) {
+    yield put(openChatForm(peerConnection, dataChannel));
 }

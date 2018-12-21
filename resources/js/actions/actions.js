@@ -4,7 +4,7 @@ export const PINGING='PINGING';
 
 export const SEND_RESPONSE='SEND_RESPONSE';
 export const WAITING_ANSWER='WAITING_ANSWER';
-export const START_COMMUNICATION='START_COMMUNICATION';
+export const OPEN_FORM='OPEN_CHATFORM';
 
 export function pinging() {
     return {
@@ -48,8 +48,13 @@ export function waitingAnswer(peerConnection, dataChannel) {
     }
 }
 
-export function startCommunication(dataChannel) {
+export function openChatForm(pc, dc) {
+    console.log("openChatForm called");
     return {
-        type: START_COMMUNICATION
+        type: OPEN_CHATFORM,
+        payload: {
+            "pc": pc,
+            "dc": dc
+        }
     }
 }
