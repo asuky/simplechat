@@ -53,15 +53,6 @@ export function* initConnection(action) {
         yield call(prepareOffer, peerConnection);
 
         peerConnection.onicecandidate = (event) => {
-            return eventChannel((emitter) => {
-                console.log("Event Channel!");
-                console.log(event);
-                emitter("hoge");
-                return () => {
-                    console.log("terminated");
-                }
-            });
-            /*
             if (event.candidate) {
                 console.log("New ICE candidate arrived");
                 console.log(event.candidate);
@@ -69,7 +60,6 @@ export function* initConnection(action) {
                 console.log("All ICE candidates are obtained");
                 updateRoomState(peerConnection.payload, peerConnection);
             }
-            */
         }
         // Answer SDP が到着するのを待つ
         yield put(waitingAnswer(peerConnection, dataChannel));
@@ -256,5 +246,6 @@ async function receiveAnswer(peerConnection, dataChannel, sdp) {
 }
 
 function* startChat(peerConnection, dataChannel) {
+
     yield put(openChatForm(peerConnection, dataChannel));
 }
