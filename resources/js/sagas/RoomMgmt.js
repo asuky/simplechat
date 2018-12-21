@@ -86,8 +86,9 @@ export function* initConnection(action) {
                 console.log("Got Data Channel Message:", event.data);
             };
             
-            dataChannel.onopen = function () {
+            dataChannel.onopen = function (event) {
                 console.log("Channel opened!");
+                console.log(event);
                 startChat(peerConnection, dataChannel);
             };
             
