@@ -4,7 +4,7 @@ export const PINGING='PINGING';
 
 export const SEND_RESPONSE='SEND_RESPONSE';
 export const WAITING_ANSWER='WAITING_ANSWER';
-export const OPEN_FORM='OPEN_CHATFORM';
+export const OPEN_CHATFORM='OPEN_CHATFORM';
 
 export function pinging() {
     return {
@@ -50,6 +50,7 @@ export function waitingAnswer(peerConnection, dataChannel) {
 
 export function openChatForm(dc) {
     console.log("openChatForm called");
+    console.log(dc);
     return {
         type: OPEN_CHATFORM,
         payload: {
