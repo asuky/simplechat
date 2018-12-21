@@ -89,7 +89,7 @@ export function* initConnection(action) {
             dataChannel.onopen = function (event) {
                 console.log("Channel opened!");
                 console.log(event);
-                startChat(peerConnection, dataChannel);
+                startChat(event.srcElement);
             };
             
             dataChannel.onclose = function () {
@@ -246,7 +246,6 @@ async function receiveAnswer(peerConnection, dataChannel, sdp) {
     });
 }
 
-function* startChat(peerConnection, dataChannel) {
-
-    yield put(openChatForm(peerConnection, dataChannel));
+function* startChat(dataChannel) {
+    yield put(openChatForm(dataChannel));
 }

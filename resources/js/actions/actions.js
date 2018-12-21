@@ -48,12 +48,11 @@ export function waitingAnswer(peerConnection, dataChannel) {
     }
 }
 
-export function openChatForm(pc, dc) {
+export function openChatForm(dc) {
     console.log("openChatForm called");
     return {
         type: OPEN_CHATFORM,
         payload: {
-            "pc": pc,
             "dc": dc
         }
     }
