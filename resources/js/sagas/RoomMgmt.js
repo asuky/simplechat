@@ -10,7 +10,7 @@ const rtcConf = {
     ]
 }
 
-export function* initConnection(action, callbackChannel) {
+export function* initConnection(callbackChannel, action) {
     console.log("initConnection runs");
 
     // RTCPeerConnection を作成、
