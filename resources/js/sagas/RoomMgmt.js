@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { put, call, select } from 'redux-saga/effects';
-import { eventChannel } from 'redux-saga';
 import { waitingAnswer, openChatForm } from '../actions/actions';
 
 const rtcConf = {
@@ -9,7 +8,7 @@ const rtcConf = {
     ]
 }
 
-export function* initConnection(action) {
+export function* initConnection(action, callbackChannel) {
     console.log("initConnection runs");
 
     // RTCPeerConnection を作成、
@@ -40,10 +39,10 @@ export function* initConnection(action) {
             console.log("Got Data Channel Message:", event.data);
         };
         
-        dataChannel.onopen = function () {
+        dataChannel.onopen = (event) => {
             console.log("Channel opened!");
-            put(openChatForm(event.srcElement));
-        };
+            callbackChannel.put(openChatForm(event.srcElement));
+        }
         
         dataChannel.onclose = function () {
             console.log("The Data Channel is Closed");
@@ -88,8 +87,7 @@ export function* initConnection(action) {
             
             dataChannel.onopen = function (event) {
                 console.log("Channel opened!");
-                console.log(event);
-                put(openChatForm(event.srcElement));
+                callbackChannel.put(openChatForm(event.srcElement));
             };
             
             dataChannel.onclose = function () {
@@ -244,8 +242,4 @@ async function receiveAnswer(peerConnection, dataChannel, sdp) {
         console.log(peerConnection);
         console.log(dataChannel);
     });
-}
-
-function* startChat(dataChannel) {
-    yield put(openChatForm(dataChannel));
 }

@@ -7,6 +7,7 @@ export const WAITING_ANSWER='WAITING_ANSWER';
 export const OPEN_CHATFORM='OPEN_CHATFORM';
 
 export function pinging() {
+    console.log("pinging");
     return {
         type: PINGING
     }
