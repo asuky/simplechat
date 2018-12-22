@@ -1,4 +1,4 @@
-import { takeEvery, actionChannel } from 'redux-saga/effects';
+import { takeEvery, actionChannel, put } from 'redux-saga/effects';
 
 import { INIT_ROOM_STATE, WAITING_ANSWER } from '../actions/actions';
 
