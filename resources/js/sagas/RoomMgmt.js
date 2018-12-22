@@ -2,6 +2,8 @@ import axios from 'axios';
 import { put, call, select } from 'redux-saga/effects';
 import { waitingAnswer, openChatForm } from '../actions/actions';
 
+import { pinging } from '../actions/actions';
+
 const rtcConf = {
     iceServers: [
         {urls: ["stun:stun.l.google.com:19302"]}
@@ -242,4 +244,8 @@ async function receiveAnswer(peerConnection, dataChannel, sdp) {
         console.log(peerConnection);
         console.log(dataChannel);
     });
+}
+
+export function* pinger() {
+    yield put(pinging());
 }
