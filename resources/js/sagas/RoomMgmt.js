@@ -12,6 +12,7 @@ const rtcConf = {
 
 export function* initConnection(callbackChannel, action) {
     console.log("initConnection runs");
+    console.log(callbackChannel);
 
     // RTCPeerConnection を作成、
     // Channel 名は roomid とする
@@ -43,6 +44,7 @@ export function* initConnection(callbackChannel, action) {
         
         dataChannel.onopen = (event) => {
             console.log("Channel opened!");
+            console.log(callbackChannel);
             callbackChannel.put(openChatForm(event.srcElement));
         }
         
