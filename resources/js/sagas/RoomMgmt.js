@@ -4,6 +4,8 @@ import { waitingAnswer, openChatForm } from '../actions/actions';
 
 import { pinging } from '../actions/actions';
 
+import { eventChannel } from 'redux-saga';
+
 const rtcConf = {
     iceServers: [
         {urls: ["stun:stun.l.google.com:19302"]}
@@ -44,8 +46,13 @@ export function* initConnection(callbackChannel, action) {
         
         dataChannel.onopen = (event) => {
             console.log("Channel opened!");
-            console.log(callbackChannel);
-            callbackChannel.put(openChatForm(event.srcElement));
+            return eventChannel(emitter => {
+                emitter(pinging());
+
+                return () => {
+                    console.log('canceled');
+                }
+            });
         }
         
         dataChannel.onclose = function () {
@@ -91,7 +98,13 @@ export function* initConnection(callbackChannel, action) {
             
             dataChannel.onopen = function (event) {
                 console.log("Channel opened!");
-                callbackChannel.put(openChatForm(event.srcElement));
+                return eventChannel(emitter => {
+                    emitter(pinging());
+    
+                    return () => {
+                        console.log('canceled');
+                    }
+                });
             };
             
             dataChannel.onclose = function () {
