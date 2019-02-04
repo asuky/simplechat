@@ -4,7 +4,7 @@ import { waitingAnswer, openChatForm } from '../actions/actions';
 
 import { pinging } from '../actions/actions';
 
-import { eventChannel } from 'redux-saga';
+import { eventChannel, END } from 'redux-saga';
 
 const rtcConf = {
     iceServers: [
@@ -12,9 +12,8 @@ const rtcConf = {
     ]
 }
 
-export function* initConnection(callbackChannel, action) {
+export function* initConnection(action) {
     console.log("initConnection runs");
-    console.log(callbackChannel);
 
     // RTCPeerConnection を作成、
     // Channel 名は roomid とする
@@ -35,29 +34,28 @@ export function* initConnection(callbackChannel, action) {
         dataChannel = peerConnection.createDataChannel(action.payload.roomid);
         console.log("DataChannel created");
         console.log(dataChannel);
-        // 諸々テスト用
-        dataChannel.onerror = function (error) {
-            console.log("Data Channel Error:", error);
-        };
-        
-        dataChannel.onmessage = function (event) {
-            console.log("Got Data Channel Message:", event.data);
-        };
-        
-        dataChannel.onopen = (event) => {
-            console.log("Channel opened!");
-            return eventChannel(emitter => {
-                emitter(pinging());
 
-                return () => {
-                    console.log('canceled');
-                }
-            });
-        }
-        
-        dataChannel.onclose = function () {
-            console.log("The Data Channel is Closed");
-        };
+        // EventChannel の作成
+        const eChannel = eventChannel(emitter => {
+
+            dataChannel.onerror = function (error) {
+                console.log("Data Channel Error:", error);
+            };
+
+            dataChannel.onmessage = function (event) {
+                console.log("Got Data Channel Message:", event.data);
+            };
+
+            dataChannel.onopen = (event) => {
+                emitter(pinging());
+            }
+
+            dataChannel.onclose = function () {
+                console.log("Channel closed.");
+                emitter(END);
+            };
+
+        });
         
         yield call(createRoom, action.payload);
         yield call(prepareOffer, peerConnection);
@@ -73,6 +71,8 @@ export function* initConnection(callbackChannel, action) {
         }
         // Answer SDP が到着するのを待つ
         yield put(waitingAnswer(peerConnection, dataChannel));
+        return eChannel;
+
     // status が 2 のとき
     // Answer 側となるので、Offer を remoteDescription に設定し、
     // answer SDP を作って PUT しつつ datachannel を作る
@@ -83,36 +83,28 @@ export function* initConnection(callbackChannel, action) {
 
         // Answer 側は Offer 側から DataChannel が到着するので
         // 到着時の対応を記載する
-        peerConnection.ondatachannel = (event) => {
-            console.log("DataChannel arrived");
-            console.log(event);
-            dataChannel = event.channel;
-            
+
+        // EventChannel の作成
+        const eChannel = eventChannel(emitter => {
+
             dataChannel.onerror = function (error) {
                 console.log("Data Channel Error:", error);
             };
-            
+
             dataChannel.onmessage = function (event) {
                 console.log("Got Data Channel Message:", event.data);
             };
-            
-            dataChannel.onopen = function (event) {
-                console.log("Channel opened!");
-                return eventChannel(emitter => {
-                    emitter(pinging());
-    
-                    return () => {
-                        console.log('canceled');
-                    }
-                });
-            };
-            
+
+            dataChannel.onopen = (event) => {
+                emitter(pinging());
+            }
+
             dataChannel.onclose = function () {
-                console.log("The Data Channel is Closed");
+                console.log("Channel closed.");
+                emitter(END);
             };
 
-            
-        }
+        });
 
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
@@ -123,6 +115,8 @@ export function* initConnection(callbackChannel, action) {
                 updateRoomState(peerConnection.payload, peerConnection);
             }
         }
+
+        return eChannel;
 
     }
 
